@@ -34,11 +34,11 @@ const BookingSchema = new Schema<IBooking>(
   },
   {
     timestamps: true, // Auto-generate createdAt and updatedAt
-  }
+  },
 );
 
 // Pre-save hook to validate event exists before creating booking
-BookingSchema.pre("save", async function (next) {
+BookingSchema.pre("save", async function () {
   const booking = this as IBooking;
 
   // Only validate eventId if it's new or modified
@@ -48,21 +48,19 @@ BookingSchema.pre("save", async function (next) {
 
       if (!eventExists) {
         const error = new Error(
-          `Event with ID ${booking.eventId} does not exist`
+          `Event with ID ${booking.eventId} does not exist`,
         );
         error.name = "ValidationError";
-        return next(error);
+        throw error;
       }
     } catch {
       const validationError = new Error(
-        "Invalid event ID format or database error"
+        "Invalid event ID format or database error",
       );
       validationError.name = "ValidationError";
-      return next(validationError);
+      throw validationError;
     }
   }
-
-  next();
 });
 
 // Create index on eventId for faster queries
@@ -77,7 +75,7 @@ BookingSchema.index({ email: 1 });
 // Enforce one booking per event per email
 BookingSchema.index(
   { eventId: 1, email: 1 },
-  { unique: true, name: "uniq_event_email" }
+  { unique: true, name: "uniq_event_email" },
 );
 const Booking = models.Booking || model<IBooking>("Booking", BookingSchema);
 
